@@ -10,21 +10,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Debug SSH secret
-        env:
-          SSH_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+      - name: Set up SSH key
         run: |
-          echo "HOME is: $HOME"
-          whoami
-          if [ -z "$SSH_KEY" ]; then
-            echo "❌ SSH_KEY is empty!"
-            exit 1
-          else
-            echo "✅ SSH_KEY is set (length: $(echo "$SSH_KEY" | wc -c) characters)"
-            echo "$SSH_KEY" | head -n 2 | sed 's/./*/g'
-          fi
-        shell: bash
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Deploy to EC2
+        run: |
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            cd /home/ubuntu/app  # change this path to your app directory
+            git pull origin main
+            docker-compose down
+            docker-compose up -d --build
+          EOF
