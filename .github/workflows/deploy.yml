@@ -1,4 +1,5 @@
-name: Deploy to EC2
+
+          name: Deploy to EC2
 
 on:
   push:
@@ -13,8 +14,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-     - name: Set up SSH key
-       env:
+      - - name: Set up SSH key
+          env:
     SSH_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
     HOME: /home/runner
   run: |
@@ -24,7 +25,7 @@ jobs:
     echo "$SSH_KEY" > $HOME/.ssh/id_rsa
     chmod 600 $HOME/.ssh/id_rsa
     ssh-keyscan -H 16.176.204.221 >> $HOME/.ssh/known_hosts
-  shell: bash
+  shell: bash 
 
       - name: SSH into EC2 and deploy
         run: |
