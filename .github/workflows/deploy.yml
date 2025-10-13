@@ -18,12 +18,14 @@ jobs:
         mkdir -p ~/.ssh
         echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 13.235.101.25 >> ~/.ssh/known_hosts
+        ssh-keyscan -H 16.176.204.221 >> ~/.ssh/known_hosts
+
 
 
     - name: SSH into EC2 and deploy
       run: |
-        ssh ubuntu@13.235.101.25 << 'EOF'
+        ssh ubuntu@16.176.204.221 << 'EOF'
+
 
           cd ~/Simple-App1 || git clone git@github.com:deepak3456/Simple-App1.git && cd Simple-App1
           git pull
