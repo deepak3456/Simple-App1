@@ -1,35 +1,34 @@
-name: Deploy Docker App to EC2
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main  # or "master" if you're using that
+      - main   # or 'master' if that’s your default branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up SSH key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H 16.176.204.221 >> ~/.ssh/known_hosts
+      - name: Set up SSH key
+        env:
+          SSH_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 16.176.204.221 >> ~/.ssh/known_hosts
+        shell: bash
 
-
-
-    - name: SSH into EC2 and deploy
-      run: |
-        ssh ubuntu@16.176.204.221 << 'EOF'
-
-
-          cd ~/Simple-App1 || git clone git@github.com:deepak3456/Simple-App1.git && cd Simple-App1
-          git pull
-          docker build -t simple-app1 .
-          docker stop simple-app1 || true && docker rm simple-app1 || true
-          docker run -d -p 80:3000 --name simple-app1 simple-app1
-        EOF
+      - name: SSH into EC2 and deploy
+        run: |
+          ssh -i ~/.ssh/id_rsa ec2-user@16.176.204.221 << 'EOF'
+            cd /home/ec2-user/Simple-App1
+            git pull origin main
+            docker compose down
+            docker compose up -d --build
+          EOF
+        shell: bash
