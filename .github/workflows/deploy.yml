@@ -1,9 +1,9 @@
-name: Deploy to EC2 (Ubuntu)
+name: Deploy to EC2
 
 on:
   push:
     branches:
-      - main   # or master if that's your default branch
+      - main   # or 'master' if that’s your default branch
 
 jobs:
   deploy:
@@ -13,27 +13,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up SSH key
+      - name: Debug SSH secret
         env:
-          SSH_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          HOME: /home/runner
-        run: |
-          echo "HOME is: $HOME"
-          whoami
-          mkdir -p $HOME/.ssh
-          printf "%s\n" "$SSH_KEY" > $HOME/.ssh/id_rsa
-          chmod 600 $HOME/.ssh/id_rsa
-          ssh-keyscan -H 16.176.204.221 >> $HOME/.ssh/known_hosts
-        shell: bash
+    SSH_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+  run: |
+    echo "HOME is: $HOME"
+    whoami
+    if [ -z "$SSH_KEY" ]; then
+      echo "❌ SSH_KEY is empty!"
+      exit 1
+    else
+      echo "✅ SSH_KEY is set (length: $(echo "$SSH_KEY" | wc -c) characters)"
+      echo "$SSH_KEY" | head -n 2 | sed 's/./*/g'   # masks output
+    fi
+  shell: bash
 
       - name: SSH into EC2 and deploy
         run: |
-          ssh -i $HOME/.ssh/id_rsa ubuntu@16.176.204.221 << 'EOF'
-            cd /home/ubuntu/Simple-App1
+          ssh -i ~/.ssh/id_rsa ec2-user@16.176.204.221 << 'EOF'
+            cd /home/ec2-user/Simple-App1
             git pull origin main
             docker compose down
             docker compose up -d --build
           EOF
         shell: bash
+
 
          
