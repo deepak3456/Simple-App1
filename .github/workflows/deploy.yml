@@ -1,9 +1,9 @@
-name: Deploy to EC2
+name: Deploy to EC2 (Ubuntu)
 
 on:
   push:
     branches:
-      - main  # or master if that’s your branch name
+      - main   # or master if that's your default branch
 
 jobs:
   deploy:
@@ -21,17 +21,19 @@ jobs:
           echo "HOME is: $HOME"
           whoami
           mkdir -p $HOME/.ssh
-          echo "$SSH_KEY" > $HOME/.ssh/id_rsa
+          printf "%s\n" "$SSH_KEY" > $HOME/.ssh/id_rsa
           chmod 600 $HOME/.ssh/id_rsa
           ssh-keyscan -H 16.176.204.221 >> $HOME/.ssh/known_hosts
         shell: bash
 
       - name: SSH into EC2 and deploy
         run: |
-          ssh -i $HOME/.ssh/id_rsa ec2-user@16.176.204.221 << 'EOF'
-            cd /home/ec2-user/Simple-App1
+          ssh -i $HOME/.ssh/id_rsa ubuntu@16.176.204.221 << 'EOF'
+            cd /home/ubuntu/Simple-App1
             git pull origin main
             docker compose down
             docker compose up -d --build
           EOF
         shell: bash
+
+         
