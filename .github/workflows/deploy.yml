@@ -1,0 +1,31 @@
+name: Deploy Docker App to EC2
+
+on:
+  push:
+    branches:
+      - main  # or 'master' if you're using that
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H YOUR.EC2.PUBLIC.IP >> ~/.ssh/known_hosts
+
+    - name: SSH into EC2 and deploy
+      run: |
+        ssh ubuntu@YOUR.EC2.PUBLIC.IP << 'EOF'
+          cd ~/Simple-App1 || git clone git@github.com:deepak3456/Simple-App1.git && cd Simple-App1
+          git pull
+          docker build -t simple-app1 .
+          docker stop simple-app1 || true && docker rm simple-app1 || true
+          docker run -d -p 80:3000 --name simple-app1 simple-app1
+        EOF
